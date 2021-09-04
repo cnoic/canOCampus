@@ -14,7 +14,7 @@ Ask the end device to change the value (*valPin*) of a GPIO (*numPin*)
   - Else the end device will return error code **R_FORBIDDEN**
 - *valPin* is on 2 char to enable 10 bit resolution on PWM if needed in future, for now the 1st char can be set to 0x00 as the analogWriteResolution is on default (8 bit)
 
-example :
+example :\
 `[0x21,0x00,0x5F] -> set Pin 1 to 95/255`
 
 #### GETPIN (0x02)
@@ -25,7 +25,7 @@ Ask the end device to return the value of the GPIO (*numPin*)
   - Else the end device will return error code **R_FORBIDDEN**
 - The end device will respond with a **READPIN (0x02)** packet
 
-example :
+example :\
 `[0x41] -> Get the value of Pin 1`
 
 #### SETPINMODE (0x03)
@@ -56,7 +56,7 @@ example:
 Ask the end device to return the mode of a pin (*numPin*)
 The end device will respond with a **GETPINMODE (0x04)** packet
 
-example:
+example:\
 `[0x81] -> get the mode Pin 1 is currently on`
 
 #### OPENBUS (0x05)
@@ -76,7 +76,7 @@ Ask the end device to open the specified bus (*numBus*) at the specified speed (
   - pins PB10 (SCL), PB11 (SDA)
 Once the bus is opened, the end device will transmit **READBUS (0x07)** packets on data reception
 
-example:
+example:\
 `[0xA0,0x00,0x25,0x80] -> Open Serial Bus 0 at 9600 bauds`
 
 #### CLOSEBUS (0x06)
@@ -85,7 +85,7 @@ example:
 Ask the end device to close the specified bus (*numBus*)
 If the bus was already closed, the end device will respond with error code **R_FORBIDDEN**
 
-example:
+example:\
 `[0xC0] -> Close Serial Bus 0`
 
 #### BUSCOMM (0x07)
@@ -108,7 +108,7 @@ I2C Bus: *char0* defines the transmission mode
   - 3 : received NACK on transmit of data (*bus error*)
   - 4 : other error
 
-example:
+examples:\
 `[0xE0,0x12,0x23,0x34]-> Send 0x12,0x23,0x34 on the Serial Bus 0`\
 `[0xE3,0x05,0x03,0xFF,0x02]-> Request 2 bytes of data from the register 0xFF of the device at adress 0x03 on the I2C Bus 0`
 ### End Device
