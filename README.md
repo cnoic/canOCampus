@@ -14,6 +14,9 @@ Ask the end device to change the value (*valPin*) of a GPIO (*numPin*)
   - Else the end device will return error code **R_FORBIDDEN**
 - *valPin* is on 2 char to enable 10 bit resolution on PWM if needed in future, for now the 1st char can be set to 0x00 as the analogWriteResolution is on default (8 bit)
 
+example :
+`[0x21,0x00,0x5F] -> set Pin 1 to 95/255`
+
 #### GETPIN (0x02)
 `[0b01000000 + *numPin*] [] [] [] [] [] [] []`
 
@@ -21,6 +24,9 @@ Ask the end device to return the value of the GPIO (*numPin*)
 - The pin must be configured as an Input
   - Else the end device will return error code **R_FORBIDDEN**
 - The end device will respond with a **READPIN (0x02)** packet
+
+example :
+`[0x41] -> Get the value of Pin 1`
 
 #### SETPINMODE (0x03)
 `[0b01100000 + *numPin*] [*pinMode*] [] [] [] [] [] []`
@@ -40,12 +46,18 @@ If *numPin* is already used by a bus link (**OPENBUS (0x05)**), the pin can not 
 - Infinite Digital Trigger (**E_INFINITE_TRIGGER_D = 9**)
   - Will send a **READPIN (0x02)** packet on every digital change
 
+example:
+`[0x65,0x04] -> Set Pin 5 on PWM Output mode`
+
 
 #### GETPINMODE (0x04)
 `[0b10000000 + *numPin*] [] [] [] [] [] [] []`
 
 Ask the end device to return the mode of a pin (*numPin*)
+The end device will respond with a **GETPINMODE (0x04)** packet
 
+example:
+`[0x81] -> get the mode Pin 1 is currently on`
 
 
 ### End Device
