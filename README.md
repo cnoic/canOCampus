@@ -110,6 +110,7 @@ I2C Bus: *char0* defines the transmission mode
 
 example:
 `[0xE0,0x12,0x23,0x34]-> Send 0x12,0x23,0x34 on the Serial Bus 0`
+
 `[0xE3,0x05,0x03,0xFF,0x02]-> Request 2 bytes of data from the register 0xFF of the device at adress 0x03 on the I2C Bus 0`
 ### End Device
 
