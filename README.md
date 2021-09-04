@@ -78,7 +78,7 @@ Once the bus is opened, the end device will transmit **READBUS (0x07)** packets 
 example:
 `[0xA0,0x00,0x25,0x80] -> Open Serial Bus 0 at 9600 bauds`
 
-#### OPENBUS (0x05)
+#### CLOSEBUS (0x06)
 `[0b11000000 + *numBus*] [*busSpeed* >> 16] [(*busSpeed* >> 8) & 0xFF] [*busSpeed* & 0xFF]`
 
 Ask the end device to close the specified bus (*numBus*)
