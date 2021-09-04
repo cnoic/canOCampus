@@ -75,6 +75,7 @@ Ask the end device to open the specified bus (*numBus*) at the specified speed (
 - I2C Bus 1 (*0x04*):
   - pins PB10 (SCL), PB11 (SDA)
 Once the bus is opened, the end device will transmit **READBUS (0x07)** packets on data reception
+
 example:
 `[0xA0,0x00,0x25,0x80] -> Open Serial Bus 0 at 9600 bauds`
 
@@ -83,6 +84,7 @@ example:
 
 Ask the end device to close the specified bus (*numBus*)
 If the bus was already closed, the end device will respond with error code **R_FORBIDDEN**
+
 example:
 `[0xC0] -> Close Serial Bus 0`
 
@@ -105,6 +107,8 @@ I2C Bus: *char0* defines the transmission mode
   - 2 : received NACK on transmit of address (*no device on this adress*)
   - 3 : received NACK on transmit of data (*bus error*)
   - 4 : other error
-    
+
+example:
+`[0xE0,0x12,0x23,0x34]-> Send 0x12,0x23,0x34 on the Serial Bus 0
 ### End Device
 
