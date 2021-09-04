@@ -89,7 +89,7 @@ example:\
 `[0xC0] -> Close Serial Bus 0`
 
 #### BUSCOMM (0x07)
-`[0b11100000 + *numBus*] [ [*char0*] [*char1*] [*char2*] [*char3*] [*char4*] [*char5*] [*char6] ]`
+`[0b11100000 + *numBus*] [ [*char0*] [*char1*] [*char2*] [*char3*] [*char4*] [*char5*] [*char6*] ]`
 
 Serial Bus: *char0* to *char6* are optionnal
 I2C Bus: *char0* defines the transmission mode 
