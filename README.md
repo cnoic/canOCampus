@@ -91,15 +91,15 @@ Serial Bus:
   *char0* to *char6* are optionnal
 I2C Bus:
 *char0* defines the transmission mode 
--**I2C_NONE = 0** add the data to the buffer
--**I2C_BEGIN = 1** start a transmission, add the data to the buffer and wait for a **I2C_END** to send it
--**I2C_FULL = 2** start a transmission, add the data to the buffer and send it, then release the bus
--**I2C_END = 3** add the data to the buffer and send it, then release the bus
--**I2C_REQUEST = 4** send a request to send *char2* bytes of data from adress *char1*
--**I2C_READ_FROM = 5** send a request to send *char3* bytes of data from the register *char2* on adress *char1*
--**I2C_END_KEEP = 6** add the data to the buffer and send it, then keep the connection active
--**I2C_FULL_KEEP = 7** start a transmission, add the data to the buffer and send it, then keep the connection active
--**I2C_SCAN_ADDR = 8** probe the bus for a device at adress *char1*, send an **ERROR** packet containing (**I2C_RET_STATUS**+*numBus*+the return code it was given)
+- **I2C_NONE = 0** add the data to the buffer
+- **I2C_BEGIN = 1** start a transmission, add the data to the buffer and wait for a **I2C_END** to send it
+- **I2C_FULL = 2** start a transmission, add the data to the buffer and send it, then release the bus
+- **I2C_END = 3** add the data to the buffer and send it, then release the bus
+- **I2C_REQUEST = 4** send a request to send *char2* bytes of data from adress *char1*
+- **I2C_READ_FROM = 5** send a request to send *char3* bytes of data from the register *char2* on adress *char1*
+- **I2C_END_KEEP = 6** add the data to the buffer and send it, then keep the connection active
+- **I2C_FULL_KEEP = 7** start a transmission, add the data to the buffer and send it, then keep the connection active
+- **I2C_SCAN_ADDR = 8** probe the bus for a device at adress *char1*, send an **ERROR** packet containing (**I2C_RET_STATUS**+*numBus*+the return code it was given)
   -- 0:success (*device found*)
   -- 1:data too long to fit in transmit buffer (*should not happen here*)
   -- 2:received NACK on transmit of address (*no device on this adress*)
