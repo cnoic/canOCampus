@@ -12,7 +12,7 @@ Connect to an array of sensors through a Can Bus
 Ask the end device to change the value (*valPin*) of a GPIO (*numPin*)
 - The pin must be configured as an output
   - Else the end device will return error code **R_FORBIDDEN**
-- *valPin* is on 2 char to enable 10bit resolution on PWM if needed in future, for now the 2nd char can be set to 0x00 as the analogWriteResolution is on default (8 bit)
+- *valPin* is on 2 char to enable 10bit resolution on PWM if needed in future, for now the 1st char can be set to 0x00 as the analogWriteResolution is on default (8 bit)
 
 #### GETPIN (0x02)
 `[0b01000000 + *numPin*] [] [] [] [] [] [] []`
