@@ -100,11 +100,11 @@ If the bus was already closed, the end device will respond with error code **R_F
     -**I2C_END_KEEP = 6** add the data to the buffer and send it, then keep the connection active
     -**I2C_FULL_KEEP = 7** start a transmission, add the data to the buffer and send it, then keep the connection active
     -**I2C_SCAN_ADDR = 8** probe the bus for a device at adress *char1*, send an **ERROR** packet containing (**I2C_RET_STATUS**+*numBus*+the return code it was given)
-      - 0:success (*device found*)
-      - 1:data too long to fit in transmit buffer (*should not happen here*)
-      - 2:received NACK on transmit of address (*no device on this adress*)
-      - 3:received NACK on transmit of data (*bus error*)
-      - 4:other error
+      -- 0:success (*device found*)
+      -- 1:data too long to fit in transmit buffer (*should not happen here*)
+      -- 2:received NACK on transmit of address (*no device on this adress*)
+      -- 3:received NACK on transmit of data (*bus error*)
+      -- 4:other error
     
 ### End Device
 
