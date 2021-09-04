@@ -83,6 +83,7 @@ example:
 
 Ask the end device to close the specified bus (*numBus*)
 If the bus was already closed, the end device will respond with error code **R_FORBIDDEN**
+example:
 `[0xC0] -> Close Serial Bus 0`
 
 #### BUSCOMM (0x07)
