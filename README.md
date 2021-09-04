@@ -8,6 +8,7 @@ Connect to an array of sensors through a Can Bus
 ### Master
 #### SETPIN (0x01)
 `[0b00100000 + *numPin*] [*valPin* <<8] [*valPin* &0xFF] [] [] [] [] []`
+
 Ask the end device to change the value (*valPin*) of a GPIO (*numPin*)
 - The pin must be configured as an output
   - Else the end device will return error code **R_FORBIDDEN**
@@ -15,6 +16,7 @@ Ask the end device to change the value (*valPin*) of a GPIO (*numPin*)
 
 #### GETPIN (0x02)
 `[0b01000000 + *numPin*] [] [] [] [] [] [] []`
+
 Ask the end device to return the value of the GPIO (*numPin*)
 - The pin must be configured as an Input
   - Else the end device will return error code **R_FORBIDDEN**
@@ -22,6 +24,7 @@ Ask the end device to return the value of the GPIO (*numPin*)
 
 #### SETPINMODE (0x03)
 `[0b01100000 + *numPin*] [*pinMode*] [] [] [] [] [] []`
+
 Set the mode of a specific GPIO (*numPin*) on the end device
 If *numPin* is already used by a bus link (**OPENBUS (0x05)**), the pin can not be used as a GPIO thus the end device will return error code **R_FORBIDDEN**
 *pinMode* :
@@ -40,6 +43,7 @@ If *numPin* is already used by a bus link (**OPENBUS (0x05)**), the pin can not 
 
 #### GETPINMODE (0x04)
 `[0b10000000 + *numPin*] [] [] [] [] [] [] []`
+
 Ask the end device to return the mode of a pin (*numPin*)
 
 
