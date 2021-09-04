@@ -6,4 +6,4 @@ Connect to an array of sensors through a Can Bus
 
 ## Protocol
 ### SETPIN (0x01)
-[__0b001 + *numPin*__] [__*valPin* <<8__] [__*valPin* &0xFF__]
+[0b00100000 + *numPin*] [*valPin* <<8] [*valPin* &0xFF]
