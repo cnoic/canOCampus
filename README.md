@@ -94,7 +94,8 @@ example:\
 `[0b11100000 + *numBus*] [ [*char0*] [*char1*] [*char2*] [*char3*] [*char4*] [*char5*] [*char6*] ]`
 
 Serial Bus: *char0* to *char6* are optionnal\
-I2C Bus: *char0* defines the transmission mode 
+I2C Bus: *char0* defines the transmission mode
+*char0* =
 - **I2C_NONE = 0** add the data to the buffer
 - **I2C_BEGIN = 1** start a transmission, add the data to the buffer and wait for a **I2C_END** to send it
 - **I2C_FULL = 2** start a transmission, add the data to the buffer and send it, then release the bus
