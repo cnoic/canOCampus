@@ -3,7 +3,7 @@ Connect to an array of sensors through a Can Bus
 ## Introduction
 The goal of this projet is to create an array of sensors, sized to fill a building with the minimal ammount of installation and the best versatility possible.
 The system consists in a Master which is essentially a RPi with a Can controller connected via SPI, and End Devices, (stm32 "bluepill") which can read sensors and control acuators.
-For a better versatility and to make this system transparent in use, the RPi has libraries to read and write remote GPIOs, use remote Serial Buses, use I²C and SPI remotely.
+For a better versatility and to make this system transparent in use, the RPi has libraries to read and write GPIOs, use Serial Buses, use I²C and SPI remotely.
 
 
 ## Protocol
@@ -91,7 +91,7 @@ example:\
 `[0xC0] -> Close Serial Bus 0`
 
 #### BUSCOMM (0x07)
-`[0b11100000 + *numBus*] [ [*char0*] [*char1*] [*char2*] [*char3*] [*char4*] [*char5*] [*char6*] ]`
+`[0b11100000 + *numBus*] [*char0*] [*char1*] [*char2*] [*char3*] [*char4*] [*char5*] [*char6*]`
 
 Serial Bus: *char0* to *char6* are optionnal\
 I2C Bus: *char0* defines the transmission mode
@@ -115,4 +115,27 @@ examples:\
 `[0xE0,0x12,0x23,0x34]-> Send 0x12,0x23,0x34 on the Serial Bus 0`\
 `[0xE3,0x05,0x03,0xFF,0x02]-> Request 2 bytes of data from the register 0xFF of the device at adress 0x03 on the I2C Bus 0`
 ### End Device
+
+#### ERROR (0x00)
+`[0x00] [ERR_TYPE] [NUM_STM32]`
+
+Transmit various control informations
+ERR_TYPE:
+- 0x00 = R_OK
+- 0x10 = R_INVALID_FMT
+- 0x20 = R_FORBIDDEN
+- 0x30 = R_INVALID_PARAM
+- 0x40 = I2C_RET_STATUS
+- 0xFF = R_ALIVE
+
+#### READBUS (0x07)
+`[0b01110000 + *numBus*] [NUM_STM32] [*char0*] [*char1*] [*char2*] [*char3*] [*char4*] [*char5*]`
+
+Serial Bus: *char0* to *char5* are optionnal
+
+#### READPIN (0x02)
+`[0b00100000 + *numPin*] [NUM_STM32] [*val* << 8] [*val* & 0xFF]`
+
+#### GETPINMODE (0x03)
+`[0b00110000 + *numPin*] [NUM_STM32] [*PIN_MODE*] [*T_low* << 8] [*T_low* & 0xFF] [*T_high* << 8] [*T_high* & 0xFF] [*inverted*]`
 
