@@ -1,6 +1,7 @@
 import can
 import time
 
+
 class CustomError(Exception):
 	"""docstring for CustomError"""
 	pass
