@@ -5,6 +5,12 @@ The goal of this projet is to create an array of sensors, sized to fill a buildi
 The system consists in a Master which is essentially a RPi with a Can controller connected via SPI. This Master controls End Devices, (stm32 "bluepill") which can read sensors and control acuators.
 For a better versatility and to make this system transparent in use, the RPi has libraries to read and write GPIOs, use Serial Buses, use I²C and SPI remotely.
 
+## Hardware requirements
+# Rpi / (MPC2515)
+I have done the wiring as explained [here](https://www.beyondlogic.org/adding-can-controller-area-network-to-the-raspberry-pi/ ).
+# STM32 (bluepill) + VP230 Can Transceiver
+I used [this](https://github.com/nopnop2002/Arduino-STM32-CAN) repo as reference for the wiring and the core programming of the can bus in [STM32duino](https://github.com/stm32duino)
+
 
 ## Protocol
 ### Master
