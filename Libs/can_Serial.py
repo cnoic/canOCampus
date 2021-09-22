@@ -1,6 +1,7 @@
 from serial import *
 from can_utils import *
 
+
 def as_byte_array(data):
     if isinstance(data ,(basestring, str)):
         data = bytes(data,"UTF-8")
