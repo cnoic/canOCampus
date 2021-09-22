@@ -8,8 +8,6 @@ except ImportError:
 
 
 
-
-
 class CAN_I2C_Device:
     """I2C class"""
 
