@@ -2,7 +2,7 @@
 Connect to an array of sensors through a Can Bus
 ## Introduction
 The goal of this projet is to create an array of sensors, sized to fill a building with the minimal ammount of installation and the best versatility possible.
-The system consists in a Master which is essentially a RPi with a Can controller connected via SPI, and End Devices, (stm32 "bluepill") which can read sensors and control acuators.
+The system consists in a Master which is essentially a RPi with a Can controller connected via SPI. This Master controls End Devices, (stm32 "bluepill") which can read sensors and control acuators.
 For a better versatility and to make this system transparent in use, the RPi has libraries to read and write GPIOs, use Serial Buses, use I²C and SPI remotely.
 
 
