@@ -30,8 +30,8 @@ Ask the end device to return the value of the GPIO (*numPin*)
 example :\
 `[0x41] -> Get the value of Pin 1`
 
-#### SETPINMODE (0x03)
-`[0b01100000 + *numPin*] [*pinMode*]`
+#### SETPINMODE (0x03) *(To modify)*
+`[0b01100000 + *numPin*] [*pinMode*] [*t_low* >> 0x08] [*t_low* & 0xFF] [*t_high* >> 0x08] [*t_high* & 0xFF] [*inverted*]`
 
 Set the mode of a specific GPIO (*numPin*) on the end device
 If *numPin* is already used by a bus link (**OPENBUS (0x05)**), the pin can not be used as a GPIO thus the end device will return error code **R_FORBIDDEN**
@@ -45,8 +45,12 @@ If *numPin* is already used by a bus link (**OPENBUS (0x05)**), the pin can not 
   - Will send a **READPIN (0x02)** packet on digital change then *pinMode* will be set on **E_NONE**
 - Analog Trigger (**E_TRIGGER_A = 8**)
   - Will send a **READPIN (0x02)** packet on analog change then *pinMode* will be set on **E_NONE**
+  - Expects *t_low* *t_high* and *inverted* to be set.
+  - *inverted* == 1 means the end device will notify when the value on *numPin* is out of range [*t_low*,*t_high*]
 - Infinite Digital Trigger (**E_INFINITE_TRIGGER_D = 9**)
   - Will send a **READPIN (0x02)** packet on every digital change
+  - Expects a *inverted* boolean (example : `[0x65,0x09,0x00] -> Set Pin 5 as infinite trigger on rising edges`
+  - example : `[0x68,0x09,0x01] -> Set Pin 8 as infinite trigger on falling edges`
 
 example:
 `[0x65,0x04] -> Set Pin 5 on PWM Output mode`
