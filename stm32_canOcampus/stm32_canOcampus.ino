@@ -29,8 +29,6 @@ typedef enum {STANDARD_FORMAT = 0, EXTENDED_FORMAT} CAN_FORMAT;
 /* Symbolic names for type of CAN message                                    */
 typedef enum {DATA_FRAME = 0, REMOTE_FRAME}         CAN_FRAME;
 
-
-typedef enum {E_NONE = 0, E_INPUT_D = 1, E_OUTPUT_D = 2, E_INPUT_A = 3, E_OUTPUT_A = 4, E_INPUT_PULLUP = 5, E_RESERVED = 6, E_TRIGGER_D = 7, E_TRIGGER_A = 8, E_INFINITE_TRIGGER_D = 9, NBETAT} ETAT;
 typedef enum {B_SERIAL = 0, B_I2C = 1} M_BUS;
 typedef enum {I2C_NONE = 0, I2C_BEGIN = 1, I2C_FULL = 2, I2C_END = 3, I2C_REQUEST = 4, I2C_READ_FROM = 5, I2C_END_KEEP = 6, I2C_FULL_KEEP = 7, I2C_SCAN_ADDR = 8} I2C_MODES;
 
@@ -55,7 +53,14 @@ typedef const struct
 typedef struct
 {
   uint8_t num;
-  ETAT mode;
+  bool analog;
+  bool trigger;
+  bool infinite;
+  bool reserved;
+  bool active;
+  bool in;
+  bool pullup;
+  bool pulldown;
   bool pwm;
   uint16_t val;
   uint16_t t_low;
@@ -85,8 +90,14 @@ Pin * default_pins(){
   Pin *out = (Pin *) malloc(29*sizeof(Pin));
   for(int p = 0; p < 29; p++){
     out[p].num = p_act[p];
-    out[p].mode = E_NONE ;
-    out[p].pwm = false;
+    out[p].active = false;
+    out[p].reserved = false;
+    out[p].trigger = false;
+    out[p].analog = false;
+    out[p].infinite = false;
+    out[p].pullup = false;
+    out[p].pulldown = false;
+    out[p].in = false;
     for(int l =0; l<15; l++){
       if(p_act[p] == p_pwm[l]) out[p].pwm = true;
     }
@@ -180,7 +191,7 @@ void reset_pins(){
 }
 
 
-/**
+/**é
  * Initializes the CAN filter registers.
  *
  * @preconditions   - This register can be written only when the filter initialization mode is set (FINIT=1) in the CAN_FMR register.
@@ -483,25 +494,15 @@ uint8_t CANMsgAvail(void)
  */
 
 bool updatePin(Pin *p){
-  switch (p->mode) {
-    case E_INPUT_D:
-    case E_TRIGGER_D:
-    case E_INFINITE_TRIGGER_D:
-      p->val = digitalRead(p->num);
-      return true;
-    case E_INPUT_A:
-    case E_TRIGGER_A:
-      p->val = analogRead(p->num);
-      return true;
-    case E_OUTPUT_D:
-      digitalWrite(p->num, (p->val ? HIGH : LOW));
-      return true;
-    case E_OUTPUT_A:
-      analogWrite(p->num, p->val);
-      return true;
-    default:
-      return false;
+  if(! p->active) return false;
+  if(p->in){
+    if(p->analog) {p->val = analogRead(p->num);}
+    else {p->val = digitalRead(p->num);}
+  }else{
+    if(p->analog) {analogWrite(p->num, p->val);}
+    else {digitalWrite(p->num, (p->val ? HIGH : LOW));}
   }
+  return true;
 }
 
 bool process_i2c(TwoWire *w, Bus *b){
@@ -575,33 +576,27 @@ bool updateBus(Bus *b){ // renvoie true si quelque chose a été lu
 }
 
 bool updatePinMode(Pin *p){
-  if(p->mode >= NBETAT) return false;
-  switch (p->mode){
-    case E_INPUT_D:
-    case E_INPUT_A:
-    case E_TRIGGER_A:
-    case E_TRIGGER_D:
-    case E_INFINITE_TRIGGER_D:
-      pinMode(p->num,INPUT);
-      return true;
-    case E_OUTPUT_D:
-    case E_OUTPUT_A:
-      pinMode(p->num,OUTPUT);
-      return true;
-    case E_INPUT_PULLUP:
-      pinMode(p->num,INPUT_PULLUP);
-      return true;
-    default:
-      return true;
+  if(p->reserved) return false;
+  if(p->in){
+    if(p->pullup && p-> pulldown) return false;
+    if(p->pullup) {pinMode(p->num,INPUT_PULLUP);}
+    else if(p->pulldown) {pinMode(p->num, INPUT_PULLDOWN);}
+    else {pinMode(p->num,INPUT);}
+  }else{
+    if (p->analog && (! p->pwm)) return false;
+    pinMode(p->num,OUTPUT);
   }
+  p->active = true;
+  return true;
 }
 
 bool openBus(Pin * pins, Bus *b){
   if(! (b->enabled)){
-    b->enabled = true;
-    if(pins[b->pin1].mode == E_RESERVED || pins[b->pin2].mode == E_RESERVED) return false;
-    pins[b->pin1].mode = E_RESERVED;
-    pins[b->pin2].mode = E_RESERVED;
+    if(pins[b->pin1].reserved || pins[b->pin2].reserved) return false;
+    pins[b->pin1].reserved = true;
+    pins[b->pin1].active = false;
+    pins[b->pin2].reserved = true;
+    pins[b->pin2].active = false;
     switch (b->num) {
       case 0:
         Serial1.begin(b->spd);
@@ -623,20 +618,22 @@ bool openBus(Pin * pins, Bus *b){
       default:
         return false;
     }
+    b->enabled = true;
     return true;
   }
   return false;
 }
 
 void closeBus(Pin * pins, Bus *b){
-  if(pins[b->pin1].mode == E_RESERVED) pins[b->pin1].mode = E_NONE;
-  if(pins[b->pin2].mode == E_RESERVED) pins[b->pin2].mode = E_NONE;
+  pins[b->pin1].reserved = false;
+  pins[b->pin2].reserved = false;
   if(!b->enabled) return;
   if(b->num == 0) Serial1.end();
   if(b->num == 1) Serial2.end();
   if(b->num == 2) Serial3.end();
   if(b->num == 3) Wire.end();
   if(b->num == 4) Wire2.end();
+  b->enabled = false;
 }
 
 
@@ -644,11 +641,7 @@ void savePins(Pin* p){
   uint8_t id = MONID;
   EEPROM.put(0,id);
   for(int i =0; i< 29; i++){
-    EEPROM.put(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + sizeof(uint8_t), (uint8_t) p[i].mode);
-    EEPROM.put(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t), p[i].val);
-    EEPROM.put(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t) + sizeof(uint16_t), p[i].t_low);
-    EEPROM.put(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t) + 2*sizeof(uint16_t), p[i].t_high);
-    EEPROM.put(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t) + 3*sizeof(uint16_t), p[i].inverted);
+    EEPROM.put(i*sizeof(Pin) + sizeof(uint8_t), p[i]);
   }
 }
 
@@ -658,12 +651,8 @@ bool restorePins(Pin* p){
   EEPROM.get(0,id);
   if (id != (uint8_t) MONID) return false;
   for(int i =0; i< 29; i++){
-    EEPROM.get(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + sizeof(uint8_t), p[i].mode);
-    EEPROM.get(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t), p[i].val);
-    EEPROM.get(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t) + sizeof(uint16_t), p[i].t_low);
-    EEPROM.get(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t) + 2*sizeof(uint16_t), p[i].t_high);
-    EEPROM.get(i*(sizeof(uint8_t) + 3* sizeof(uint16_t) + sizeof(bool)) + 2*sizeof(uint8_t) + 3*sizeof(uint16_t), p[i].inverted);
-    if (! updatePinMode(&(p[i]))) return false;
+    EEPROM.get(i*sizeof(Pin) + sizeof(uint8_t), p[i]);
+    if(p[i].active) updatePinMode(&(p[i]));
   }
   return true;
 }
@@ -673,28 +662,20 @@ COMMAND_STATUS CANSetPinMode(Pin* p, CAN_msg_t* CAN_rx_msg){
   if(CAN_rx_msg->len < 2) return R_INVALID_FMT;
   uint8_t num = CAN_rx_msg->data[0] & 0x1F;
   if(num > 28) return R_INVALID_PARAM;
-  if (p[num].mode == E_RESERVED) return R_FORBIDDEN;
-  ETAT m = (ETAT) CAN_rx_msg->data[1];
-  if (m >= NBETAT) return R_INVALID_PARAM;
-  if(m == E_INFINITE_TRIGGER_D){
-    p[num].inverted = false;
+  p[num].in =  CAN_rx_msg->data[1]& 0x80;
+  p[num].analog = CAN_rx_msg->data[1]& 0x40;
+  p[num].pullup = CAN_rx_msg->data[1]& 0x20;
+  p[num].pulldown = CAN_rx_msg->data[1]& 0x10;
+  p[num].trigger = CAN_rx_msg->data[1]& 0x08;
+  p[num].infinite = CAN_rx_msg->data[1]& 0x04;
+  p[num].inverted = CAN_rx_msg->data[1]& 0x02;
+  if (CAN_rx_msg->len == 6){
+  p[num].t_low = (CAN_rx_msg->data[2]) << 8;
+  p[num].t_low += (CAN_rx_msg->data[3]);
+  p[num].t_high = (CAN_rx_msg->data[4]) << 8;
+  p[num].t_high += (CAN_rx_msg->data[5]);
   }
-  if((m == E_OUTPUT_A) && (! p[num].pwm)) return R_FORBIDDEN;
-  if(m == E_TRIGGER_D){
-    if (CAN_rx_msg->len != 3) return R_INVALID_FMT;
-    p[num].inverted = (CAN_rx_msg->data[2]);
-  }else if(m == E_TRIGGER_A){
-    if (CAN_rx_msg->len != 7) return R_INVALID_FMT;
-    p[num].t_low = (CAN_rx_msg->data[2]) << 8;
-    p[num].t_low += (CAN_rx_msg->data[3]);
-    p[num].t_high = (CAN_rx_msg->data[4]) << 8;
-    p[num].t_high += (CAN_rx_msg->data[5]);
-    p[num].inverted = (CAN_rx_msg->data[6]);
-  }else{
-    if (CAN_rx_msg->len != 2) return R_INVALID_FMT;
-  }
-  p[num].mode = m;
-  updatePinMode(&(p[num]));
+  if (!updatePinMode(&(p[num]))) return R_FORBIDDEN;
   savePins(p);
   return R_OK;
 }
@@ -731,20 +712,14 @@ COMMAND_STATUS CANGetPinMode(Pin* p, CAN_msg_t* CAN_rx_msg){
   CAN_msg_t CAN_TX_msg;
   CAN_TX_msg.data[0] = (GETPINMODE << 5) + num;
   CAN_TX_msg.data[1] = MONID;
-  CAN_TX_msg.data[2] = p[num].mode;
+  CAN_rx_msg->data[2] = p[num].in << 7;
+  CAN_rx_msg->data[2] |= p[num].analog << 6;
+  CAN_rx_msg->data[2] |= p[num].pullup << 5;
+  CAN_rx_msg->data[2] |= p[num].pulldown << 4;
+  CAN_rx_msg->data[2] |= p[num].trigger << 3;
+  CAN_rx_msg->data[2] |= p[num].infinite << 2;
+  CAN_rx_msg->data[2] |= p[num].inverted << 1;
   CAN_TX_msg.len = 3;
-  if(p[num].mode == E_TRIGGER_A){
-    CAN_TX_msg.data[3] = p[num].t_low >> 0x08;
-    CAN_TX_msg.data[4] = p[num].t_low & 0xFF;
-    CAN_TX_msg.data[5] = p[num].t_high >> 0x08;
-    CAN_TX_msg.data[6] = p[num].t_high & 0xFF;
-    CAN_TX_msg.data[7] = p[num].inverted;
-    CAN_TX_msg.len = 8;
-  }
-  if(p[num].mode == E_TRIGGER_D){
-    CAN_TX_msg.data[3] = p[num].inverted;
-    CAN_TX_msg.len = 4;
-  }
   CAN_TX_msg.type = DATA_FRAME;
   CAN_TX_msg.format = STANDARD_FORMAT;
   CAN_TX_msg.id = REP_ID;
@@ -757,27 +732,16 @@ COMMAND_STATUS CANGetPinValue(Pin* p, CAN_msg_t* CAN_rx_msg){
   if(CAN_rx_msg->len != 1) return R_INVALID_FMT;
   uint8_t num = CAN_rx_msg->data[0] & 0x1F;
   if(num > 28) return R_INVALID_PARAM;
-  if(p[num].mode == E_NONE || p[num].mode == E_RESERVED) return R_FORBIDDEN;
+  if(p[num].reserved || (!p[num].active)) return R_FORBIDDEN;
   updatePin(&(p[num]));
-  CAN_msg_t CAN_TX_msg;
-  CAN_TX_msg.data[0] = (GETPIN << 5) + num;
-  CAN_TX_msg.data[1] = MONID;
-  CAN_TX_msg.data[2] = p[num].val >> 8;
-  CAN_TX_msg.data[3] = p[num].val && 0xFF;
-  CAN_TX_msg.len = 4;
-  
-  CAN_TX_msg.type = DATA_FRAME;
-  CAN_TX_msg.format = STANDARD_FORMAT;
-  CAN_TX_msg.id = REP_ID;
-  CANSend(&CAN_TX_msg);
-  return R_OK;
+  return CANSendPinValue(p,num);
 }
 
 COMMAND_STATUS CANSetPinValue(Pin* p, CAN_msg_t* CAN_rx_msg){
   if(CAN_rx_msg->len != 3) return R_INVALID_FMT;
   uint8_t num = CAN_rx_msg->data[0] & 0x1F;
   if(num > 28) return R_INVALID_PARAM;
-  if(p[num].mode != E_OUTPUT_D && p[num].mode != E_OUTPUT_A) return R_FORBIDDEN;
+  if(p[num].in) return R_FORBIDDEN;
   p[num].val = (CAN_rx_msg->data[1]) << 8;
   p[num].val += (CAN_rx_msg->data[2]);
   updatePin(&(p[num]));
@@ -813,7 +777,7 @@ COMMAND_STATUS CANReadBus(Bus* b){
   return R_OK;
 }
 
-COMMAND_STATUS CANReadPin(Pin* p, uint16_t num){
+COMMAND_STATUS CANSendPinValue(Pin* p, uint16_t num){
   CAN_msg_t CAN_TX_msg;
   CAN_TX_msg.data[0] = (GETPIN << 5) + num;
   CAN_TX_msg.data[1] = MONID;
@@ -907,24 +871,17 @@ void loop() {
     }
   }
   for(int i =0; i<29; i++){
-    if(p[i].mode == E_TRIGGER_A || p[i].mode == E_TRIGGER_D || p[i].mode == E_INFINITE_TRIGGER_D){
+    if(p[i].trigger && p[i].in){
       updatePin(&(p[i]));
-      if ((p[i].mode == E_INFINITE_TRIGGER_D) && (p[i].val != p[i].inverted)){
-        p[i].inverted = p[i].val;
-        confirm(CANReadPin(p,i));
-        savePins(p);
+      if(((p[i].analog) && (((p[i].t_low <= p[i].val) && (p[i].t_high > p[i].val)) != p[i].inverted)) ||
+      ((!p[i].analog) && ((bool) p[i].val) != p[i].inverted))
+      {
+          if(p[i].infinite){ p[i].inverted = !p[i].inverted;}
+          else{ p[i].trigger = false;}
+          confirm(CANSendPinValue(p,i));
+          savePins(p);
+        }
       }
-      if ((p[i].mode == E_TRIGGER_D) && (p[i].val != p[i].inverted)){
-        p[i].mode = E_INPUT_D;
-        confirm(CANReadPin(p,i));
-        savePins(p);
-      }
-      if ((p[i].mode == E_TRIGGER_A) && (((p[i].t_low <= p[i].val) && (p[i].t_high > p[i].val)) != p[i].inverted)){
-        p[i].mode = E_INPUT_A;
-        confirm(CANReadPin(p,i));
-        savePins(p);
-      }
-    }
   }
   if(CANMsgAvail()) {
     CANReceive(&CAN_RX_msg);
