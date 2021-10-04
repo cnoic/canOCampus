@@ -64,7 +64,7 @@ When Infinite is not set, after a notification is sent, the trigger is disabled
 If Infinite, then after a notification is set, inverted is switched so another notification will be send on the opposite change.
 
 example:
-`[0x65,0b01000000] -> Set Pin 5 on PWM Output mode`
+`[0x65,0b01000000] -> Set Pin 5 on PWM Output mode`\
 `[0x67,0b11001100,0x00,0x64,0x00,0xC8] -> Set Pin 7 on Infinite Analog trigger when in range [100,200]`
 
 
