@@ -37,29 +37,35 @@ example :\
 `[0x41] -> Get the value of Pin 1`
 
 #### SETPINMODE (0x03) *(To modify)*
-`[0b01100000 + *numPin*] [*pinMode*] [*t_low* >> 0x08] [*t_low* & 0xFF] [*t_high* >> 0x08] [*t_high* & 0xFF] [*inverted*]`
+`[0b01100000 + *numPin*] [*pinMode*] [*t_low* >> 0x08] [*t_low* & 0xFF] [*t_high* >> 0x08] [*t_high* & 0xFF]`
 
 Set the mode of a specific GPIO (*numPin*) on the end device
 If *numPin* is already used by a bus link (**OPENBUS (0x05)**), the pin can not be used as a GPIO thus the end device will return error code **R_FORBIDDEN**
-*pinMode* :
-- Digital Input (**E_INPUT_D = 1**)
-- Digital Output (**E_OUTPUT_D = 2**)
-- Analog Input (**E_INPUT_A = 3**)
-- PWM Output (**E_OUTPUT_A = 4**)
-- Digital Input Pullup (**E_INPUT_PULLUP = 5**)
-- Digital Trigger (**E_TRIGGER_D = 7**)
-  - Will send a **READPIN (0x02)** packet on digital change then *pinMode* will be set on **E_NONE**
-- Analog Trigger (**E_TRIGGER_A = 8**)
-  - Will send a **READPIN (0x02)** packet on analog change then *pinMode* will be set on **E_NONE**
-  - Expects *t_low* *t_high* and *inverted* to be set.
-  - *inverted* == 1 means the end device will notify when the value on *numPin* is out of range [*t_low*,*t_high*]
-- Infinite Digital Trigger (**E_INFINITE_TRIGGER_D = 9**)
-  - Will send a **READPIN (0x02)** packet on every digital change
-  - Expects a *inverted* boolean (example : `[0x65,0x09,0x00] -> Set Pin 5 as infinite trigger on rising edges`
-  - example : `[0x68,0x09,0x01] -> Set Pin 8 as infinite trigger on falling edges`
+*pinMode* : [b0,b1,b2,b3,b4,b5,b6,b7]
+- b0 : 1 = Input / 0 = Output
+- b1 : 1 = Analog / 0 = Digital
+- b2 : 1 = Pullup / 0 = None
+- b3 : 1 = Pulldown / 0 = None
+- b4 : 1 = Trigger / 0 = Normal
+- b5 : 1 = Infinite / 0 = One time (Trigger)
+- b6 : 1 = Inverted / 0 = Normal
+- b7 : None
+
+
+If not provided, *t_low* and *t_high* are set to 0.
+The Bluepill only support pwm output on specific pins
+{PA0, PA1, PA2, PA3, PA6, PA7, PA8, PA9, PA10, PB0, PB1, PB6, PB7, PB8, PB9}
+An error will be send if *pinMode* is set on output + analog on a pin that does not support it.
+Pullup / Pulldown are mutually exclusives.
+If Trigger is set, the end device will send a **READPIN (0x02)** packet on any change. 
+If inverted + digital : on falling edges, not inverted + digital : on rising edges.
+If inverted + analog :  when outside [*t_low*,*t_high*], not inverted + analog : when inside [*t_low*,*t_high*].
+When Infinite is not set, after a notification is sent, the trigger is disabled
+If Infinite, then after a notification is set, inverted is switched so another notification will be send on the opposite change.
 
 example:
-`[0x65,0x04] -> Set Pin 5 on PWM Output mode`
+`[0x65,0b01000000] -> Set Pin 5 on PWM Output mode`
+`[0x67,0b11001100,0x00,0x64,0x00,0xC8] -> Set Pin 7 on Infinite Analog trigger when in range [100,200]`
 
 
 #### GETPINMODE (0x04)
